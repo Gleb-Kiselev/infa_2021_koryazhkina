@@ -3,10 +3,12 @@ from pygame.draw import *
 import math
 pygame.init()
 
-screenWidth = 1280
-screenHeight = 720
 templateWidth = 2501
 templateHeight = 1667
+screenWidth = 1280
+screenHeight = round(screenWidth/templateWidth * templateHeight)
+pandTemplateWidth = 780
+pandTemplateHeight = 873
 FPS = 30
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 clock = pygame.time.Clock()
@@ -15,12 +17,27 @@ clock = pygame.time.Clock()
 def main():
     backgroundColor = (255, 175, 128)
     fillBackground(backgroundColor)
+    
+    drawTree({'x': 634/templateWidth*screenWidth,
+              'y': 348/templateHeight*screenHeight,
+              'width': 448/templateWidth*screenWidth,
+              'height': 836/templateHeight*screenHeight,
+              'color': (0, 104, 55)})
+    
     drawTree({'x': 585/templateWidth*screenWidth,
               'y': 0,
               'width': 1350/templateWidth*screenWidth,
               'height': 1134/templateHeight*screenHeight,
               'color': (0, 104, 55)})
+    
+    drawPand({'x': 1329/templateWidth * screenWidth,
+              'y': 600/templateHeight * screenHeight,
+              'width': pandTemplateWidth/templateWidth * screenWidth,
+              'height': pandTemplateHeight/templateHeight * screenHeight})
 
+
+
+    
 def fillBackground(color):
     '''Fills the background with the received color.'''
     rect(screen, color, (0,0, screenWidth,screenHeight))
@@ -293,13 +310,139 @@ def drawLeaf(vertex, length, width, tilt, treeParams):
 
 
     
+def drawPand(pandParams):
+    '''Draws the pand using the box model: the pand is bounded by box.
+    pandParams - dictionary with box parametres {'x': x, 'y': y, 'width': width, 'height': height}'''
 
-    
+
+
+    surface = pygame.Surface((pandTemplateWidth, pandTemplateHeight), pygame.SRCALPHA)
+
+
+
+    rightPawVertexes = [(153, 360), (200, 650), (160, 689), (97, 651), (109, 395), (153, 360)]
+    leftForePawVertexes = [(473, 188), (454, 501), (404, 713), (326, 789), (247, 762), (473, 188)]
+    backPawVertexes = [(687, 393), (558, 720), (479, 667), (687, 393)]
+    faceVertexes = [(255, 136), (329, 174), (336, 365), (170, 398), (160, 198), (205, 136), (225, 136)]
+
+
+
+
+    ellipse(surface, (255, 255, 255), (105, 145, 641, 364))
+    roundedCornersPolygon(surface, (0,0,0), rightPawVertexes, 50)
+    roundedCornersPolygon(surface, (0,0,0), leftForePawVertexes, 50)
+    roundedCornersPolygon(surface, (0,0,0), backPawVertexes, 70)
+    roundedCornersPolygon(surface, (255, 255, 255), faceVertexes, 100)
+    ellipse(surface, (0,0,0), (62, 264, 87, 131))
+    circle(surface, (0,0,0), (262, 362), 64)
+    ellipse(surface, (0,0,0), (81, 440, 103, 69))
+
+
+    earLength = distance((189, 15), (26, 180)) - 50
+    earWidth = distance((56, 51), (133, 127))
+
+
+    earBox = pygame.Surface((earWidth, earLength), pygame.SRCALPHA)
+    ellipse(earBox, (0,0,0), (0,0,earWidth, earLength))
+    leftEar = pygame.transform.rotate(earBox, -40)
+    rightEar = pygame.transform.rotate(earBox, 20)
+
+    surface.blit(leftEar, (17, 2))
+    surface.blit(rightEar, (327, 48))
+
+
+
+
+    surface = pygame.transform.scale(surface, (round(pandParams['width']), round(pandParams['height'])))
+    screen.blit(surface, (pandParams['x'], pandParams['y']))
+
+
+
+
+
+def roundedCornersPolygon(surface, color, vertexesList, cornerRadius):
+    '''Draws the convex polygon with rounded corners.
+    surface - pygame.Surface object for drawing
+    color - color for drawing
+    vertexesList - list [(x1, y1), (x2, y2)...] with coordinates of corner arcs' centers
+    cornerRadius - radius for corners'''
+
+
+    auxiliaryPolygonVertexes = []
+
+    def rotateDirection(vector, nextVector):
+        '''vector and nextVector are objects pygame.math.Vector2
+        returns 1 if vector needs to be rotated counterclockwise and -1 else'''
+
+        vectorPolarAngle = vector.as_polar()[1]
+        nextVectorPolarAngle = nextVector.as_polar()[1]
+
+        if nextVectorPolarAngle - vectorPolarAngle > 180:
+            vectorPolarAngle += 360
+
+        elif vectorPolarAngle - nextVectorPolarAngle > 180:
+            nextVectorPolarAngle += 360
+
+
+
+        if nextVectorPolarAngle > vectorPolarAngle:
+            return -1
+
+        else: return 1
+
+
+    def translateSegment(vertex1, vertex2, translateVector):
+        '''Moves the segment vertex1-vertex2 on translateVector
+        vertex1, vertex2 - pairs (x, y) of coordinates
+        translateVector - object pygame.math.Vector2
+        Returns the list [A, B] with coordinates' pairs for new segment's vertexes'''
+
+        newVertex1 = (vertex1[0] + translateVector[0], vertex1[1] - translateVector[1])
+        newVertex2 = (vertex2[0] + translateVector[0], vertex2[1] - translateVector[1])
+
+        return [newVertex1, newVertex2]
+            
+        
+    for i in range(1, len(vertexesList)):
+        auxiliaryPolygonVertexes.append(vertexesList[i-1])
+        
+        currentVector = [vertexesList[i], vertexesList[i-1]]
+        nextVector = [vertexesList[i], vertexesList[ (i+1)%len(vertexesList) ] ]
+
+
+        currentVectorX = currentVector[1][0] - currentVector[0][0]
+        currentVectorY = -(currentVector[1][1] - currentVector[0][1])
+        currentVectorObj = pygame.math.Vector2(currentVectorX, currentVectorY)
+        currentVectorPolarAngle = currentVectorObj.as_polar()[1]
+
+
+        nextVectorX = nextVector[1][0] - nextVector[0][0]
+        nextVectorY = -(nextVector[1][1] - nextVector[0][1])
+        nextVectorObj = pygame.math.Vector2(nextVectorX, nextVectorY)
+
+        
+        directionCoef = rotateDirection(currentVectorObj, nextVectorObj)
+
+        normal = pygame.math.Vector2()
+        normal.from_polar((cornerRadius, currentVectorPolarAngle + directionCoef*90))
+
+        newSegment = translateSegment(vertexesList[i-1], vertexesList[i], normal)
+
+        auxiliaryPolygonVertexes += newSegment
+        auxiliaryPolygonVertexes.append(vertexesList[i])
+
+
+
+    polygon(surface, color, auxiliaryPolygonVertexes)
+    for vertex in vertexesList:
+        circle(surface, color, vertex, cornerRadius)
+
+
+        
     
 
 
 main()
-
 pygame.display.update()
 finished = False
 while not finished:
