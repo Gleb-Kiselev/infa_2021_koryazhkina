@@ -89,10 +89,34 @@ def drawTree(treeParams):
     drawTrunk(treeParams)
 
 
-    branches = [[(38/62, 13/65), (16/62, 3/65), (1/62, 5/65)],
+    branches1 = [[(38/62, 13/65), (16/62, 3/65), (1/62, 5/65)],
                 [(37/62, 24/65), (54/62, 16/65), (67/62, 14/65)],
                 [(7/62, 23/65), (16/62, 21/65), (32/62, 27/65)],
                 [(34/62, 44/65), (42/62, 36/65), (58/62, 34/65)]]
+
+
+    branches2 = [[(30/62, 17/65), (16/62, 12/65), (2/62, 16/65)],
+                [(33/62, 25/65), (43/62, 12/65), (58/62, 6/65)],
+                [(7/62, 35/65), (18/62, 30/65), (30/62, 31/65)],
+                [(34/62, 44/65), (41/62, 34/65), (50/62, 30/65)]]
+
+
+
+    branches = []
+    for i in range(4):
+        curBranch = []
+        branch1 = branches1[i]
+        branch2 = branches2[i]
+
+        for j in range(3):
+            startDot = branch1[j]
+            finDot = branch2[j]
+
+            curDot = cycleTraectory(startDot, finDot, 1000, treeParams['timeLabel'])
+            curBranch.append(curDot)
+
+
+        branches.append(curBranch)
 
 
     listsForLeaves = [[3, 1, 1, 1, 1, 1],
@@ -539,6 +563,12 @@ def cycleTraectory(dot1, dot2, duration, now):
         coef = -restMoving/duration
         resVector = (coef*movingVector[0], coef*movingVector[1])
         return (x2+resVector[0], y2+resVector[1])
+
+
+
+
+def runInInterval(startValue, stopValue, duration, now):
+    pass
 
 
     
