@@ -52,19 +52,55 @@ def main():
               'timeLabel': pygame.time.get_ticks()})
 
 
+    now = pygame.time.get_ticks()
     
-    
+
+
+
+    smallPandInitialParams = {'x': 1024/templateWidth * screenWidth,
+                              'y': 1185/templateHeight * screenHeight - 200,
+                              'width': 383/templateWidth * screenWidth,
+                              'height': 389/templateHeight * screenHeight}
+
+
+    smallPandFinParams = {'x': 1024/templateWidth * screenWidth - 700,
+                          'y': 1185/templateHeight * screenHeight - 300,
+                          'width': 383/templateWidth * screenWidth * 2,
+                          'height': 389/templateHeight * screenHeight * 2}
+
+
+
+    smallPandParams = {}
+    for key in smallPandInitialParams:
+        paramValue1 = smallPandInitialParams[key]
+        paramValue2 = smallPandFinParams[key]
+        currentValue = walkInInterval(paramValue1, paramValue2, 3000, now)
+        smallPandParams[key] = currentValue
+
+
+    if math.floor(now/3000) % 2 == 0:
+        smallPandParams['mirror'] = False
+    else:
+        smallPandParams['mirror'] = True
+
+
+    smallPandParams['rotateAngle'] = walkInInterval(-20, 20, 500, now)
+    smallPandParams['timeLabel'] = now
+
+
+
+    drawPand(smallPandParams)
+
+
+
+
     drawPand({'x': 1329/templateWidth * screenWidth,
-              'y': 600/templateHeight * screenHeight,
-              'width': pandTemplateWidth/templateWidth * screenWidth,
-              'height': pandTemplateHeight/templateHeight * screenHeight})
-
-
-    
-    drawPand({'x': 1024/templateWidth * screenWidth,
-              'y': 1185/templateHeight * screenHeight,
-              'width': 383/templateWidth * screenWidth,
-              'height': 389/templateHeight * screenHeight})
+          'y': 600/templateHeight * screenHeight,
+          'width': pandTemplateWidth/templateWidth * screenWidth,
+          'height': pandTemplateHeight/templateHeight * screenHeight,
+          'rotateAngle': 0,
+          'mirror': False,
+          'timeLabel': now})
 
 
 
@@ -392,13 +428,20 @@ def drawLeaf(vertex, length, width, tilt, treeParams):
     absWidth = width * treeParams['height']
 
 
+
+
     if tilt == 'right': coef = 1
     else: coef = -1
 
 
+    startAngle = 10
+    finAngle = startAngle*(coef+1)
+    angle = walkInInterval(startAngle, finAngle, 1000, treeParams['timeLabel'])
+
+
     leafBox = pygame.Surface((absWidth, absLength), pygame.SRCALPHA)
     ellipse(leafBox, treeParams['color'], pygame.Rect(0, 0, absWidth, absLength))
-    leafBox = pygame.transform.rotate(leafBox, coef*10)
+    leafBox = pygame.transform.rotate(leafBox, coef*angle)
     boxWidth, boxHeight = leafBox.get_size()
     
     screen.blit(leafBox, (vertex[0] - boxWidth/2, vertex[1]))
@@ -430,8 +473,42 @@ def drawPand(pandParams):
     roundedCornersPolygon(surface, (0,0,0), leftForePawVertexes, 50)
     roundedCornersPolygon(surface, (0,0,0), backPawVertexes, 70)
     roundedCornersPolygon(surface, (255, 255, 255), faceVertexes, 100)
-    ellipse(surface, (0,0,0), (62, 264, 87, 131))
-    circle(surface, (0,0,0), (262, 362), 64)
+
+
+
+
+    if math.floor(pandParams['timeLabel']/200) % 6 == 0:
+        #eyes drawing {
+        leftEyeStartRect = (62, 264, 87, 131)
+        leftEyeFinRect = (62, 264 + 131/2, 87, 0)
+        leftEyeRect = []
+        for i in range(4):
+            currentValue = walkInInterval(leftEyeStartRect[i], leftEyeFinRect[i], 200, pandParams['timeLabel'])
+            leftEyeRect.append(currentValue)
+        
+        ellipse(surface, (0,0,0), leftEyeRect)
+
+
+
+
+
+        rightEyeStartRect = (262-64, 362-64, 64*2, 64*2)
+        rightEyeFinRect = (262-64, 362, 64*2, 0)
+        rightEyeRect = []
+        for i in range(4):
+            currentValue = walkInInterval(rightEyeStartRect[i], rightEyeFinRect[i], 200, pandParams['timeLabel'])
+            rightEyeRect.append(currentValue)
+        ellipse(surface, (0,0,0), rightEyeRect)
+
+
+        #}
+
+    else:
+        ellipse(surface, (0,0,0), (62, 264, 87, 131))
+        ellipse(surface, (0,0,0), (262-64, 362-64, 64*2, 64*2))
+
+
+    
     ellipse(surface, (0,0,0), (81, 440, 103, 69))
 
 
@@ -441,8 +518,17 @@ def drawPand(pandParams):
 
     earBox = pygame.Surface((earWidth, earLength), pygame.SRCALPHA)
     ellipse(earBox, (0,0,0), (0,0,earWidth, earLength))
-    leftEar = pygame.transform.rotate(earBox, -40)
-    rightEar = pygame.transform.rotate(earBox, 20)
+    
+    leftEarStartAngle = -40
+    leftEarStopAngle = -70
+    leftEarAngle = walkInInterval(leftEarStartAngle, leftEarStopAngle, 1000, pandParams['timeLabel'])         
+    leftEar = pygame.transform.rotate(earBox, leftEarAngle)
+
+
+    rightEarStartAngle = 20
+    rightEarStopAngle = 60
+    rightEarAngle = walkInInterval(rightEarStartAngle, rightEarStopAngle, 1000, pandParams['timeLabel'])
+    rightEar = pygame.transform.rotate(earBox, rightEarAngle)
 
     surface.blit(leftEar, (17, 2))
     surface.blit(rightEar, (327, 48))
@@ -451,6 +537,8 @@ def drawPand(pandParams):
 
 
     surface = pygame.transform.scale(surface, (round(pandParams['width']), round(pandParams['height'])))
+    surface = pygame.transform.rotate(surface, pandParams['rotateAngle'])
+    surface = pygame.transform.flip(surface, pandParams['mirror'], False)
     screen.blit(surface, (pandParams['x'], pandParams['y']))
 
 
@@ -567,8 +655,26 @@ def cycleTraectory(dot1, dot2, duration, now):
 
 
 
-def runInInterval(startValue, stopValue, duration, now):
-    pass
+def walkInInterval(startValue, finValue, duration, now):
+    '''This function smoothly changes a value from startValue to stopValue.
+    Returns the value at the moment.
+    Arguments:
+    startValue - value at the initial time
+    finValue - value at the end of moving
+    duration - duration of moving from startValue to finValue (ms)
+    now - time elapsed since the initial moment (ms)'''
+
+
+    delta = finValue - startValue
+    fullMovings = math.floor(now/duration)
+    restMovingTime = now - fullMovings*duration
+
+    if fullMovings % 2 == 0:
+        coef = restMovingTime/duration
+        return startValue + delta*coef
+    else:
+        coef = restMovingTime/duration
+        return finValue - delta*coef
 
 
     
